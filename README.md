@@ -1,1 +1,30 @@
-# simple-tic-tac-toe
+# Simple Tic-Tac-Toe (Rust)
+
+Ein kleines Terminal-Spiel in Rust mit drei Spielmodi:
+
+- **Player vs Player**
+- **Player vs Computer (Easy)** - zufaellige Zuege
+- **Player vs Computer (Hard)** - Minimax-Logik
+
+## Voraussetzungen
+
+- Rust (Edition 2021)
+- Cargo
+
+## Starten
+
+```bash
+cargo run --bin tictactoe
+```
+
+## Tests
+
+```bash
+cargo test
+```
+
+## Steuerung
+
+1. Spielmodus auswaehlen (`1`, `2` oder `3`)
+2. Zug als `Zeile Spalte` eingeben (z. B. `1 2`)
+3. Gueltige Werte sind `0`, `1`, `2`
