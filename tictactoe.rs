@@ -85,15 +85,19 @@ impl Game {
         };
     }
 
-    fn get_random_move(&self) -> (usize, usize) {
+    fn get_random_move(&self) -> Option<(usize, usize)> {
         let mut rng = rand::thread_rng();
-        loop {
-            let row = rng.gen_range(0..BOARD_SIZE);
-            let col = rng.gen_range(0..BOARD_SIZE);
-            if self.board[row][col] == Cell::Empty {
-                return (row, col);
-            }
+        let empty_cells: Vec<(usize, usize)> = (0..BOARD_SIZE)
+            .flat_map(|row| {
+                (0..BOARD_SIZE).filter_map(move |col| {
+                    (self.board[row][col] == Cell::Empty).then_some((row, col))
+                })
+            })
+            .collect();
+        if empty_cells.is_empty() {
+            return None;
         }
+        Some(empty_cells[rng.gen_range(0..empty_cells.len())])
     }
 
     fn minimax(&mut self, depth: usize, is_maximizing: bool) -> i32 {
@@ -160,7 +164,6 @@ impl Game {
 fn main() {
     let mut game = Game::new();
     let player1 = Player::Human;
-    let mut player2 = Player::ComputerHard;
 
     println!("Welcome to Tic Tac Toe!");
     println!("Select game mode:");
@@ -170,15 +173,15 @@ fn main() {
 
     let mut input = String::new();
     io::stdin().read_line(&mut input).unwrap();
-    match input.trim() {
-        "1" => player2 = Player::Human,
-        "2" => player2 = Player::ComputerEasy,
-        "3" => player2 = Player::ComputerHard,
+    let player2 = match input.trim() {
+        "1" => Player::Human,
+        "2" => Player::ComputerEasy,
+        "3" => Player::ComputerHard,
         _ => {
             println!("Invalid selection. Exiting...");
             return;
         }
-    }
+    };
 
     loop {
         game.display_board();
@@ -191,7 +194,14 @@ fn main() {
             },
             Cell::O => match player2 {
                 Player::Human => get_player_move(),
-                Player::ComputerEasy => game.get_random_move(),
+                Player::ComputerEasy => match game.get_random_move() {
+                    Some(random_move) => random_move,
+                    None => {
+                        game.display_board();
+                        println!("It's a draw!");
+                        break;
+                    }
+                },
                 Player::ComputerHard => game.get_best_move(),
             },
             Cell::Empty => unreachable!(),
@@ -231,5 +241,22 @@ fn get_player_move() -> (usize, usize) {
             }
         }
         println!("Invalid input. Please enter two numbers separated by a space (e.g., 1 2).");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_random_move_picks_only_empty_cell() {
+        let mut game = Game::new();
+        game.board = [
+            [Cell::X, Cell::O, Cell::X],
+            [Cell::O, Cell::X, Cell::O],
+            [Cell::X, Cell::Empty, Cell::O],
+        ];
+
+        assert_eq!(game.get_random_move(), Some((2, 1)));
     }
 }
