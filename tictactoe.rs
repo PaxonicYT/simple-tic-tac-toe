@@ -85,7 +85,7 @@ impl Game {
         };
     }
 
-    fn get_random_move(&self) -> (usize, usize) {
+    fn get_random_move(&self) -> Option<(usize, usize)> {
         let mut rng = rand::thread_rng();
         let empty_cells: Vec<(usize, usize)> = (0..BOARD_SIZE)
             .flat_map(|row| {
@@ -94,7 +94,10 @@ impl Game {
                 })
             })
             .collect();
-        empty_cells[rng.gen_range(0..empty_cells.len())]
+        if empty_cells.is_empty() {
+            return None;
+        }
+        Some(empty_cells[rng.gen_range(0..empty_cells.len())])
     }
 
     fn minimax(&mut self, depth: usize, is_maximizing: bool) -> i32 {
@@ -191,7 +194,14 @@ fn main() {
             },
             Cell::O => match player2 {
                 Player::Human => get_player_move(),
-                Player::ComputerEasy => game.get_random_move(),
+                Player::ComputerEasy => match game.get_random_move() {
+                    Some(random_move) => random_move,
+                    None => {
+                        game.display_board();
+                        println!("It's a draw!");
+                        break;
+                    }
+                },
                 Player::ComputerHard => game.get_best_move(),
             },
             Cell::Empty => unreachable!(),
@@ -247,6 +257,6 @@ mod tests {
             [Cell::X, Cell::Empty, Cell::O],
         ];
 
-        assert_eq!(game.get_random_move(), (2, 1));
+        assert_eq!(game.get_random_move(), Some((2, 1)));
     }
 }
